@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Move PO files into a repository, renaming them appropriately
+#
+# Example: msgmv plpython-de.po somewhere/git/messages/de/
+#
+# This runs some checks on the file, moves the file, and renames it to
+# plpython.po.
+
+set -eu
+
+target="${@: -1}"
+
+for file; do
+	if [ "$file" = "$target" ]; then
+		break
+	fi
+	msgchk "$file" >/dev/null
+	base=$(basename "$file")
+	catalog=$(echo "$base" | sed -r 's/-[a-zA-Z_]+.po$//')
+	lang=$(echo "$base" | sed -r 's/^.*-([a-zA-Z_]+).po$/\1/')
+	if [[ $target != */$lang ]]; then
+		echo "wrong language" 1>&2
+		return 1
+	fi
+	mv "$file" "$target/$catalog.po"
+done
