@@ -1,0 +1,8 @@
+#!/bin/bash
+
+set -eu
+
+diff -u --label "$1" --label "$2" -I '^"POT-Creation-Date:' \
+     <(msgcat --no-location --no-wrap --sort-output "$1") \
+     <(msgcat --no-location --no-wrap --sort-output "$2") \
+	| source-highlight --src-lang=diff -fesc
