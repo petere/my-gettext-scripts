@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# Check PO files for various problems
+
+set -eu
+
+for file in "$@"; do
+	# standard checks
+	msgfmt -o /dev/null -c -v --statistics "$file"
+
+	# check for DOS line endings, which cause some tools to fail
+	if grep -q '' "$file"; then echo "$file: contains DOS line endings" 1>&2; fi
+
+	# run file through msgcat, might reveal encoding errors
+	! ( msgcat "$file" 2>&1 >/dev/null ) | grep .
+
+	# check for combination #~| which causes some tools to fail
+	! grep -E -Hn '#~\|' "$file" 1>&2
+
+	# check for trailing whitespace
+	! mispipe "grep -E -H -n ' +$' '$file'" "cat -ET"
+done
