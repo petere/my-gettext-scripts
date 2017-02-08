@@ -1,0 +1,53 @@
+#!/bin/bash
+
+# Script for backpatching translations
+#
+# This is useful for working with multiple branches that need the same
+# or nearly the same translations updated.  First, fill in the missing
+# translations in the newest branch, commit, and push.  Then, for each
+# older branch, get the .po file that you need to fill in, say
+# something.po, and run
+#
+#     msgbackpatch something.po elsewhere/newerbranch/yourlang/
+#
+# elsewhere/newerbranch/yourlang/ is the directory of the newer branch
+# where you already filled in the translations.  This script will grab
+# the missing translations from there and update something.po in
+# place.
+#
+# This is harder than it sounds because msgmerge doesn't allow
+# self-merging, and so we need to create a fake .pot file first.
+
+set -eu
+
+input=$1
+compendium=$2
+
+c_args=()
+
+if [ -d $compendium ]; then
+	for file in $compendium/*.po; do
+		c_args+=('-C' $file)
+	done
+else
+	c_args+=('-C' $compendium)
+fi
+
+cp -i $input ${input}~
+
+pot=${input}t
+msgfilter -i $input -o $pot true
+
+# clear out all fuzzy entries, because those would take precedence over compendia
+msgattrib --clear-fuzzy --clear-previous --empty $input -o $input.tmp
+
+msgmerge -q --no-wrap --previous --sort-by-file -o ${input}.tmp2 ${input}.tmp $pot ${c_args[@]}
+
+msgattrib --no-obsolete --no-wrap ${input}.tmp2 -o $input
+
+diff -u \
+     <(msgcat --no-location --no-wrap --sort-output ${input}~) \
+     <(msgcat --no-location --no-wrap --sort-output $input) \
+	| source-highlight --src-lang=diff -fesc | less
+
+rm $pot $input.tmp $input.tmp2
