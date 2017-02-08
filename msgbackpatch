@@ -45,9 +45,6 @@ msgmerge -q --no-wrap --previous --sort-by-file -o ${input}.tmp2 ${input}.tmp $p
 
 msgattrib --no-obsolete --no-wrap ${input}.tmp2 -o $input
 
-diff -u \
-     <(msgcat --no-location --no-wrap --sort-output ${input}~) \
-     <(msgcat --no-location --no-wrap --sort-output $input) \
-	| source-highlight --src-lang=diff -fesc | less
+msgdiff ${input}~ $input | less
 
 rm $pot $input.tmp $input.tmp2
