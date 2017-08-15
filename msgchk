@@ -9,10 +9,10 @@ for file in "$@"; do
 	msgfmt -o /dev/null -c -v --statistics "$file"
 
 	# check for DOS line endings, which cause some tools to fail
-	if grep -q '' "$file"; then echo "$file: contains DOS line endings" 1>&2; fi
+	if grep -q '' "$file"; then echo "$file: contains DOS line endings" 1>&2; exit 1; fi
 
 	# run file through msgcat, might reveal encoding errors
-	! ( msgcat "$file" 2>&1 >/dev/null ) | grep .
+	( msgcat "$file" 2>&1 >/dev/null ) | grep . && exit 1
 
 	# check for combination #~| which causes some tools to fail
 	! grep -E -Hn '#~\|' "$file" 1>&2
